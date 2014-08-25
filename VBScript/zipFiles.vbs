@@ -9,7 +9,8 @@ Dim sourceDir, source, zipFileName, overWriteOption, zipExtension, useTempFolder
 ' Construct Arguments
 source = fso.GetAbsolutePathName(objArgs(0))
 zipFileName = fso.GetAbsolutePathName(objArgs(1))
-overWriteOption = not strComp(objArgs(2), "true", vbTextCompare)
+overWriteOption = not strComp(objArgs(2), "true", vbTextCompare)    '(-1) for true, (0) for false
+deleteSource = not strComp(objArgs(3), "true", vbTextCompare)       '(-1) for true, (0) for false
 
 ' Ensure a valid zip extension is used
 zipExtension = fso.GetExtensionName(zipFileName)
@@ -37,23 +38,58 @@ Else
 End If
 
 ' Zip content
-Wscript.Stdout.Write("Compressing """ & source & """ to """ & zipFileName & """.") 
-With fso.CreateTextFile(zipFileName, overWriteOption)
-	.Write Chr(80) & Chr(75) & Chr(5) & Chr(6) & String(18, chr(0))
-End With
+On Error Resume Next
+    Wscript.Stdout.Write("Compressing """ & source & """ to """ & zipFileName & """.") 
+    With fso.CreateTextFile(zipFileName, overWriteOption)
+	    .Write Chr(80) & Chr(75) & Chr(5) & Chr(6) & String(18, chr(0))
+    End With
 
-With oShell
-        .NameSpace(zipFileName).CopyHere .NameSpace(sourceDir).Items
+    If Err.number <> 0 Then
+        Wscript.Stdout.WriteLine("! ")
+        Wscript.Echo "Could not create the zip file. (" & Err.Description & ")"
+        Wscript.Echo "Task aborted!"
+        Err.Clear
+        Dispose
+        Wscript.Quit
+    End If
 
-        ' Make sure to wait until every file is copied into the new zip file
-        Do Until .NameSpace(zipFileName).Items.Count = .NameSpace(sourceDir).Items.Count
-            Wscript.Stdout.Write(".")
-            WScript.Sleep 1000 
-        Loop
-        Wscript.Stdout.WriteLine(".")
-End With
 
-IF useTempFolder = true Then fso.DeleteFolder sourceDir, true
+    With oShell
+            .NameSpace(zipFileName).CopyHere .NameSpace(sourceDir).Items
+
+            ' Make sure to wait until every file is copied into the new zip file
+            Do Until .NameSpace(zipFileName).Items.Count = .NameSpace(sourceDir).Items.Count
+
+                If Err.number <> 0 Then
+                    Wscript.Stdout.WriteLine("! ")
+                    Wscript.Echo "Compression failed. (" & Err.Description & ")"
+                    Wscript.Echo "Task aborted!"
+                    Err.Clear
+                    Dispose
+                    Wscript.Quit
+                End If
+
+                Wscript.Stdout.Write(".")
+                WScript.Sleep 1000 
+            Loop
+            Wscript.Stdout.WriteLine(".")
+    End With
+
+On Error Goto 0
+
+' Delete source files or folder if the user has ask
+If deleteSource = -1 Then 
+    If useTempFolder = false Then
+        Wscript.Echo "Deleteing the source folder..."
+        fso.DeleteFolder source
+    Else
+        Wscript.Echo "Deleteing the source files..."
+        fso.DeleteFile source
+    End If
+End If
+
+' Call dispose and we are done
+Dispose
 
 Wscript.Echo "Task Complete!"
 
@@ -77,4 +113,9 @@ Sub SetupTempSourceDir(parentFolder)
     guid = tLib.Guid
     sourceDir = fso.BuildPath(parentFolder, Left(guid, Len(guid)-2))
     fso.CreateFolder(sourceDir)
+End Sub
+
+'Dispose sub to clean up each time the script exits
+Sub Dispose()
+    If useTempFolder = true Then fso.DeleteFolder sourceDir, true
 End Sub
