@@ -114,6 +114,7 @@ Sub CopyFilesToFolder(sourceFiles, targetFolder)
                 Wscript.Echo sourceFiles & " not found. (" & Err.Description & ")"
                 Wscript.Echo "Task aborted!"
                 Err.Clear
+                Dispose
                 Wscript.Quit
             End If
         On Error Goto 0
