@@ -4,7 +4,7 @@ Set oShell = CreateObject("Shell.Application")
 Set tLib = CreateObject("Scriptlet.TypeLib")
 Set objArgs = WScript.Arguments
 
-Dim sourceDir, source, zipFileName, overWriteOption, zipExtension, useTempFolder
+Dim sourceDir, source, zipFileName, overWriteOption, zipExtension, useTempFolder, timer
 
 ' Construct Arguments
 source = fso.GetAbsolutePathName(objArgs(0))
@@ -39,7 +39,8 @@ End If
 
 ' Zip content
 On Error Resume Next
-    Wscript.Stdout.Write("Compressing """ & source & """ to """ & zipFileName & """.") 
+    Wscript.Stdout.WriteLine("Compressing: """ & source & "") 
+    Wscript.Stdout.Write("To: """ & zipFileName & """.") 
     With fso.CreateTextFile(zipFileName, overWriteOption)
 	    .Write Chr(80) & Chr(75) & Chr(5) & Chr(6) & String(18, chr(0))
     End With
@@ -53,11 +54,11 @@ On Error Resume Next
         Wscript.Quit
     End If
 
-
     With oShell
             .NameSpace(zipFileName).CopyHere .NameSpace(sourceDir).Items
 
             ' Make sure to wait until every file is copied into the new zip file
+			timer = 0 'In seconds
             Do Until .NameSpace(zipFileName).Items.Count = .NameSpace(sourceDir).Items.Count
 
                 If Err.number <> 0 Then
@@ -69,7 +70,7 @@ On Error Resume Next
                     Wscript.Quit
                 End If
 
-                Wscript.Stdout.Write(".")
+                timer = timer + 1
                 WScript.Sleep 1000 
             Loop
             Wscript.Stdout.WriteLine(".")
@@ -91,7 +92,7 @@ End If
 ' Call dispose and we are done
 Dispose
 
-Wscript.Echo "Task Complete!"
+Wscript.Echo "Task Complete! (" & timer & " seconds)"
 
 ''' SUB ROUTINES '''
 
