@@ -18,7 +18,7 @@ Dim threshold 'e.g. 54 (54%)
 driveSpec = objArgs(0)
 threshold = objArgs(1)
 
-' Check free disk space
+' Check available disk space
 WScript.Echo 
 Wscript.Echo "Checking disk space on """ & driveSpec & """ drive..."
 WScript.Echo 

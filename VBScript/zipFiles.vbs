@@ -37,7 +37,7 @@ If overWriteOption = 0 Then
     End If
 End If
 
-' Setup and use a temp source director if give source is not a folder. ie a filepath or wildcard
+' Setup and use a temp source directory if given source is not a folder. ie a filepath or wildcard
 If fso.FolderExists(source) Then
     useTempFolder = false
     sourceDir = source
@@ -88,7 +88,7 @@ On Error Resume Next
 
 On Error Goto 0
 
-' Delete source files or folder if the user has ask
+' Delete source files or folder if the user has asked
 If deleteSource = -1 Then 
     If useTempFolder = false Then
         Wscript.Echo "Deleteing the source folder..."
