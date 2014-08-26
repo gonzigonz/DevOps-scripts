@@ -1,3 +1,13 @@
+'*  Script name:    zipFiles.vbs
+'*  Created on:     21/08/2014
+'*  Author:         Gonzalo Lucero (gonzalo.lucero@jjhonline.com)
+'*  License:        The MIT License (MIT) Copyright (c) 2014 Gonzigonz
+'*  Purpose:        Zips files or a folder with the options to 
+'*                  overwrite existing zip file and or delete the original
+'*                  source files.
+'*  History:        firstname surname date
+'*                  Modified to reflect new area code....etc
+
 ' Using
 Set fso = CreateObject("Scripting.FileSystemObject")
 Set oShell = CreateObject("Shell.Application")
