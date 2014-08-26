@@ -1,7 +1,7 @@
 '*  Script name:   checkDiskSpace.vbs
 '*  Created on:    26/08/2014
-'*  Author:        Gonzalo Lucero (gonzalo.lucero@jjhonline.com)
-'*  License:        The MIT License (MIT) Copyright (c) 2014 Gonzigonz
+'*  Author:        Gonzalo Lucero (https://github.com/gonzigonz)
+'*  License:       The MIT License (MIT) Copyright (c) 2014 Gonzigonz
 '*  Purpose:       Check free disk space on windows machines.
 '*                 Alerts if space less than defined threshold
 '*  History:       firstname surname date
@@ -13,7 +13,6 @@ Set objArgs = WScript.Arguments
 
 Dim driveSpec 'e.g. c:
 Dim threshold 'e.g. 54 (54%)
-Dim precentageAvailable
 
 ' Construct Arguments
 driveSpec = objArgs(0)
@@ -39,6 +38,8 @@ With fso.GetDrive(driveSpec)
 
     If (.AvailableSpace / .TotalSize) < (threshold / 100) Then
         WScript.Echo "Low Diskspace Alert! - Less then " & FormatPercent(threshold / 100)
+	Else
+		WScript.Echo "Disk Space OK."
     End If
 
 End With
