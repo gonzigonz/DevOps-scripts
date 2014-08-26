@@ -1,6 +1,6 @@
 '*  Script name:    zipFiles.vbs
 '*  Created on:     21/08/2014
-'*  Author:         Gonzalo Lucero (gonzalo.lucero@jjhonline.com)
+'*  Author:         Gonzalo Lucero (https://github.com/gonzigonz)
 '*  License:        The MIT License (MIT) Copyright (c) 2014 Gonzigonz
 '*  Purpose:        Zips files or a folder with the options to 
 '*                  overwrite existing zip file and or delete the original
