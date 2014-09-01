@@ -1,0 +1,2 @@
+cscript getSharePermissions.vbs
+pause
