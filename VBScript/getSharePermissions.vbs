@@ -1,6 +1,9 @@
 '*  Script name:    getSharePermissions.vbs
 '*  Created on:     01/09/2014
 '*  Author:         Gonzalo Lucero (https://github.com/gonzigonz)
+'*                  - Special acknowledgements to The Microsoft Scripting Guys
+'*                  - "We All Scream for Security Descriptors" May 2006
+'*                  - (http://technet.microsoft.com/en-gb/magazine/2006.05.scriptingguy.aspx)
 '*  License:        The MIT License (MIT) Copyright (c) 2014 Gonzigonz
 '*  Purpose:        Retrives a csv list of every ACL for every share found
 '*                  on the local computer
