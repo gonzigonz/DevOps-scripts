@@ -11,9 +11,8 @@
 '*                  Modified to reflect new area code....etc
 
 ' Using
-Set fso = CreateObject("Scripting.FileSystemObject")
-Set wmi = GetObject("winmgmts:\\localhost\root\cimv2") 
-Set objArgs = WScript.Arguments
+Set objFSO = CreateObject("Scripting.FileSystemObject")
+Set objWMI = GetObject("winmgmts:\\localhost\root\cimv2")
 
 ' Locals
 Const ForAppending = 2
@@ -24,8 +23,8 @@ outputFilename = "sharePermissions.csv"
 
 ' Contruct Output
 If outputToFile Then
-    strFile = fso.GetAbsolutePathName(outputFilename)
-    Set output = fso.OpenTextFile(strFile, ForAppending, True)
+    strFile = objFSO.GetAbsolutePathName(outputFilename)
+    Set output = objFSO.OpenTextFile(strFile, ForAppending, True)
 Else
     Set output = Wscript.Stdout
 End If
@@ -38,10 +37,12 @@ For Each share In GetLocalShares()
     Wscript.Stdout.WriteLine("- " & share.name)
     For Each aclLine in GetACLDetails(share)
         output.WriteLine(aclLine)
-        
     Next
     WScript.Sleep 100
 Next
+
+'Call dispose and we are done
+Dispose
 Wscript.Echo
 Wscript.Stdout.WriteLine("Finished.")
 
@@ -54,7 +55,7 @@ Function GetACLDetails(share)
         GetACLDetails = Array()
 
     Else
-        Set objFile = wmi.Get("Win32_LogicalFileSecuritySetting='" & share.Path & "'")
+        Set objFile = objWMI.Get("Win32_LogicalFileSecuritySetting='" & share.Path & "'")
         If objFile.GetSecurityDescriptor(sd) = 0 Then
 
             owner = sd.Owner.Domain & "\" & sd.Owner.Name
@@ -157,7 +158,7 @@ Function GetACLDetails(share)
 End Function
 
 Function GetLocalShares
-    Set GetLocalShares = wmi.ExecQuery("Select * from win32_share")
+    Set GetLocalShares = objWMI.ExecQuery("Select * from win32_share")
 End Function
 
 ' //Subs
@@ -165,4 +166,7 @@ End Function
 ' Dispose sub to clean up Each time the script exits
 Sub Dispose()
     If outputToFile = true Then output.Close
+    Set output = Nothing
+    Set objFSO = Nothing
+    Set objWMI = Nothing
 End Sub

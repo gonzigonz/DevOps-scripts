@@ -17,7 +17,7 @@
 Const ForReading = 1
 Const ForWriting = 2
 Const ForAppending = 8
-Dim objGroup, objUser, objFSO, objFile, strDomain, strGroup, Domain, Group
+Dim objGroup, objUser, objFSO, strDomain, strGroup, Domain, Group
 
 ' //Using
 Set objFSO = CreateObject("Scripting.FileSystemObject")
@@ -92,7 +92,7 @@ Wscript.Stdout.WriteLine("Finished.")
 ' Dispose sub to clean up Each time the script exits
 Sub Dispose()
     If outputToFile = true Then output.Close
-    Set objFile = Nothing
+    Set output = Nothing
     Set objFSO = Nothing
     Set objUser = Nothing
     Set objGroup = Nothing

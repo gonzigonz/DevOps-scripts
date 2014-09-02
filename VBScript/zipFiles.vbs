@@ -9,28 +9,28 @@
 '*                  Modified to reflect new area code....etc
 
 ' Using
-Set fso = CreateObject("Scripting.FileSystemObject")
-Set oShell = CreateObject("Shell.Application")
-Set tLib = CreateObject("Scriptlet.TypeLib")
+Set objFSO = CreateObject("Scripting.FileSystemObject")
+Set objShell = CreateObject("Shell.Application")
+Set objTypeLib = CreateObject("Scriptlet.TypeLib")
 Set objArgs = WScript.Arguments
 
 Dim sourceDir, source, zipFileName, overWriteOption, zipExtension, useTempFolder, timer
 
 ' Construct Arguments
-source = fso.GetAbsolutePathName(objArgs(0))
-zipFileName = fso.GetAbsolutePathName(objArgs(1))
+source = objFSO.GetAbsolutePathName(objArgs(0))
+zipFileName = objFSO.GetAbsolutePathName(objArgs(1))
 overWriteOption = not strComp(objArgs(2), "true", vbTextCompare)    '(-1) for true, (0) for false
 deleteSource = not strComp(objArgs(3), "true", vbTextCompare)       '(-1) for true, (0) for false
 
 ' Ensure a valid zip extension is used
-zipExtension = fso.GetExtensionName(zipFileName)
+zipExtension = objFSO.GetExtensionName(zipFileName)
 If strComp(zipExtension, "zip", vbTextCompare) = -1 Then
     zipFileName = zipFileName & ".zip"
 End If
 
 ' Quit if overwrite set to false and a zip file already exists
 If overWriteOption = 0 Then 
-    If fso.FileExists(zipFileName) Then 
+    If objFSO.FileExists(zipFileName) Then 
         Wscript.Echo "You have set the overwrite option to 'FALSE' but the zip file '" & zipFileName & "' already exists."
         Wscript.Echo "Task aborted!"
         Wscript.Quit
@@ -38,12 +38,12 @@ If overWriteOption = 0 Then
 End If
 
 ' Setup and use a temp source directory if given source is not a folder. ie a filepath or wildcard
-If fso.FolderExists(source) Then
+If objFSO.FolderExists(source) Then
     useTempFolder = false
     sourceDir = source
 Else
     useTempFolder = true
-    SetupTempSourceDir fso.GetParentFolderName(zipFileName)
+    SetupTempSourceDir objFSO.GetParentFolderName(zipFileName)
     CopyFilesToFolder source, sourceDir
 End If
 
@@ -51,7 +51,7 @@ End If
 On Error Resume Next
     Wscript.Stdout.WriteLine("Compressing: """ & source & "") 
     Wscript.Stdout.Write("To: """ & zipFileName & """.") 
-    With fso.CreateTextFile(zipFileName, overWriteOption)
+    With objFSO.CreateTextFile(zipFileName, overWriteOption)
 	    .Write Chr(80) & Chr(75) & Chr(5) & Chr(6) & String(18, chr(0))
     End With
 
@@ -64,7 +64,7 @@ On Error Resume Next
         Wscript.Quit
     End If
 
-    With oShell
+    With objShell
             .NameSpace(zipFileName).CopyHere .NameSpace(sourceDir).Items
 
             ' Make sure to wait until every file is copied into the new zip file
@@ -92,10 +92,10 @@ On Error Goto 0
 If deleteSource = -1 Then 
     If useTempFolder = false Then
         Wscript.Echo "Deleteing the source folder..."
-        fso.DeleteFolder source
+        objFSO.DeleteFolder source
     Else
         Wscript.Echo "Deleteing the source files..."
-        fso.DeleteFile source
+        objFSO.DeleteFile source
     End If
 End If
 
@@ -109,7 +109,7 @@ Wscript.Echo "Task Complete! (" & timer & " seconds)"
 'Sub to copy a file or files using wild card if source is not a folder
 Sub CopyFilesToFolder(sourceFiles, targetFolder)
         On Error Resume Next
-            fso.CopyFile sourceFiles, targetFolder  & "\"
+            objFSO.CopyFile sourceFiles, targetFolder  & "\"
             If Err.number <> 0 Then
                 Wscript.Echo sourceFiles & " not found. (" & Err.Description & ")"
                 Wscript.Echo "Task aborted!"
@@ -122,12 +122,16 @@ End Sub
 
 'Sub to Create a temp folder and set as sourceDir
 Sub SetupTempSourceDir(parentFolder)
-    guid = tLib.Guid
-    sourceDir = fso.BuildPath(parentFolder, Left(guid, Len(guid)-2))
-    fso.CreateFolder(sourceDir)
+    guid = objTypeLib.Guid
+    sourceDir = objFSO.BuildPath(parentFolder, Left(guid, Len(guid)-2))
+    objFSO.CreateFolder(sourceDir)
 End Sub
 
 'Dispose sub to clean up each time the script exits
 Sub Dispose()
-    If useTempFolder = true Then fso.DeleteFolder sourceDir, true
+    If useTempFolder = true Then objFSO.DeleteFolder sourceDir, true
+    Set objFSO = Nothing
+    Set objShell = Nothing
+    Set objTypeLib = Nothing
+    Set objArgs = Nothing
 End Sub
