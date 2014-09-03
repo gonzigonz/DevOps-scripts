@@ -13,6 +13,7 @@
 ' Using
 Set objFSO = CreateObject("Scripting.FileSystemObject")
 Set objWMI = GetObject("winmgmts:\\localhost\root\cimv2")
+Set objNetwork = CreateObject("WScript.Network")
 
 ' Locals
 Const ForAppending = 2
@@ -32,20 +33,19 @@ End If
 ' //Main
 Wscript.Stdout.WriteLine("Reterving ACL for local shares...")
 Wscript.Stdout.WriteLine
-output.WriteLine("NAME,PATH,OWNER,USER_OR_GROUP,TYPE,ACCESS,INHERITANCE,APPLIES_TO")
+output.WriteLine("NAME,PATH,OWNER,ACCOUNT,FULLNAME,TYPE,ACCESS,INHERITANCE,APPLIES_TO")
 For Each share In GetLocalShares()
     Wscript.Stdout.WriteLine("- " & share.name)
     For Each aclLine in GetACLDetails(share)
         output.WriteLine(aclLine)
     Next
-    WScript.Sleep 100
 Next
+Wscript.Sleep 2000
 
 'Call dispose and we are done
 Dispose
 Wscript.Echo
 Wscript.Stdout.WriteLine("Finished.")
-
 
 ' //Funcs
 Function GetACLDetails(share)
@@ -53,11 +53,12 @@ Function GetACLDetails(share)
     If share.Path = "" Then
         'Return empty array as no path exists
         GetACLDetails = Array()
-
     Else
         Set objFile = objWMI.Get("Win32_LogicalFileSecuritySetting='" & share.Path & "'")
         If objFile.GetSecurityDescriptor(sd) = 0 Then
-
+			On Error Resume Next
+			
+			'Get owner
             owner = sd.Owner.Domain & "\" & sd.Owner.Name
 
             'Create an array to save all ACL details
@@ -67,9 +68,33 @@ Function GetACLDetails(share)
 
             'Loop throught each ACE
             For Each objAce in sd.DACL
-                
+
                 'Get User or Group to whom this ACL applies
                 userOrGroup = objAce.Trustee.Domain & "\" & objAce.Trustee.Name
+
+                'Get FullName if its a domain user or account
+				fullname = ""
+                If objAce.Trustee.Domain <> objNetwork.ComputerName And _
+                   objAce.Trustee.Domain <> "" And _
+                   objAce.Trustee.Domain <> "NT SERVICE" And _
+                   objAce.Trustee.Domain <> "NT AUTHORITY" And _
+                   objAce.Trustee.Domain <> "BUILTIN" And _
+                   objAce.Trustee.Domain <> "APPLICATION PACKAGE AUTHORITY" Then
+					 Set objAccount = objWMI.Get("Win32_Account.Name='" & objAce.Trustee.Name & "',Domain='" & objAce.Trustee.Domain &"'")
+'                            Select Case objAccount.SIDType
+'                                Case 1  Wscript.Echo vbTab & vbTab & "SidTypeUser "
+'                                Case 2  Wscript.Echo vbTab & vbTab & "SidTypeGroup "
+'                                Case 3  Wscript.Echo vbTab & vbTab & "SidTypeDomain "
+'                                Case 4  Wscript.Echo vbTab & vbTab & "SidTypeAlias "
+'                                Case 5  Wscript.Echo vbTab & vbTab & "SidTypeWellKnownGroup "
+'                                Case 6  Wscript.Echo vbTab & vbTab & "SidTypeDeletedAccount"
+'                                Case 7  Wscript.Echo vbTab & vbTab & "SidTypeInvalid "
+'                                Case 8  Wscript.Echo vbTab & vbTab & "SidTypeUnknown "
+'                                Case 9  Wscript.Echo vbTab & vbTab & "SidTypeComputer "
+'                                Case Else Wscript.Echo vbTab & vbTab & "Invalid SidType "
+'                            End Select
+					If objAccount.SIDType = 1 Then fullname = objAccount.FullName
+                End If
 
                 'Get the ACL Type
                 If objAce.AceType = 0 Then
@@ -138,7 +163,8 @@ Function GetACLDetails(share)
                     share.name & "," & _ 
                     share.path & "," & _ 
                     owner & "," & _ 
-                    userOrGroup & "," & _
+                    userOrGroup & "," & _ 
+                    fullname & "," & _
                     aceType & "," & _
                     access & "," & _
                     inheritance & "," & _
@@ -153,7 +179,8 @@ Function GetACLDetails(share)
             'Return the array
             GetACLDetails = arrACLDetails
 
-        End If
+			On Error Goto 0
+		End If
     End If
 End Function
 
@@ -169,4 +196,5 @@ Sub Dispose()
     Set output = Nothing
     Set objFSO = Nothing
     Set objWMI = Nothing
+    Set objNetwork = Nothing
 End Sub
