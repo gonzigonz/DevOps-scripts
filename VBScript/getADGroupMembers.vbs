@@ -70,7 +70,7 @@ On Error Resume Next
         Wscript.Quit
     End If
 
-    If includeHeaders Then output.WriteLine("RUN_DATE,DOMIN,GROUP,ACCOUNT,FULLNAME,TYPE,ENABLED")
+    If includeHeaders Then output.WriteLine("RUN_DATE,DOMIN,GROUP,FULLNAME,ACCOUNT,TYPE,DISABLED")
     For Each objUser In objGroup.Members
         output.WriteLine _
             uCase(strDomain) & "," & _
