@@ -1,10 +1,10 @@
-FilePoller.exe - ReadMe File
-
+***************************************************** FilePoller.exe *****************************************************
 Gonzalo Lucero
 9th Feb 2015
 The MIT License (MIT)
-
 Source Code avalible at https://github.com/gonzigonz/DevOps-scripts
+
+File Poller is a general purpose .Net console application that can be used to poll for the existence of files on the Windows platform.
 
 HELP
 
