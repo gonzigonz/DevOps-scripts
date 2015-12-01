@@ -125,7 +125,7 @@
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(10, 137);
+            this.label5.Location = new System.Drawing.Point(10, 157);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(118, 13);
             this.label5.TabIndex = 21;
@@ -135,7 +135,7 @@
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(31, 111);
+            this.label4.Location = new System.Drawing.Point(31, 131);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(97, 13);
             this.label4.TabIndex = 20;
@@ -145,7 +145,7 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(48, 85);
+            this.label3.Location = new System.Drawing.Point(48, 105);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(80, 13);
             this.label3.TabIndex = 19;
@@ -164,7 +164,7 @@
             // 
             // textBoxFileNameColumnName
             // 
-            this.textBoxFileNameColumnName.Location = new System.Drawing.Point(134, 134);
+            this.textBoxFileNameColumnName.Location = new System.Drawing.Point(134, 154);
             this.textBoxFileNameColumnName.Name = "textBoxFileNameColumnName";
             this.textBoxFileNameColumnName.Size = new System.Drawing.Size(100, 20);
             this.textBoxFileNameColumnName.TabIndex = 17;
@@ -181,14 +181,14 @@
             // 
             // textBoxBlobColumnName
             // 
-            this.textBoxBlobColumnName.Location = new System.Drawing.Point(134, 108);
+            this.textBoxBlobColumnName.Location = new System.Drawing.Point(134, 128);
             this.textBoxBlobColumnName.Name = "textBoxBlobColumnName";
             this.textBoxBlobColumnName.Size = new System.Drawing.Size(100, 20);
             this.textBoxBlobColumnName.TabIndex = 15;
             // 
             // textBoxDownloadPath
             // 
-            this.textBoxDownloadPath.Location = new System.Drawing.Point(134, 82);
+            this.textBoxDownloadPath.Location = new System.Drawing.Point(134, 102);
             this.textBoxDownloadPath.Name = "textBoxDownloadPath";
             this.textBoxDownloadPath.Size = new System.Drawing.Size(535, 20);
             this.textBoxDownloadPath.TabIndex = 14;
@@ -196,8 +196,9 @@
             // textBoxSqlQueryString
             // 
             this.textBoxSqlQueryString.Location = new System.Drawing.Point(134, 56);
+            this.textBoxSqlQueryString.Multiline = true;
             this.textBoxSqlQueryString.Name = "textBoxSqlQueryString";
-            this.textBoxSqlQueryString.Size = new System.Drawing.Size(535, 20);
+            this.textBoxSqlQueryString.Size = new System.Drawing.Size(535, 40);
             this.textBoxSqlQueryString.TabIndex = 13;
             // 
             // textBoxConnectionString
