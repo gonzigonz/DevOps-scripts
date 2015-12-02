@@ -1,4 +1,6 @@
-﻿namespace MSBD.Entities
+﻿using System;
+
+namespace MSBD.Entities
 {
     public class DownloadConfig
     {
@@ -7,14 +9,13 @@
         public string DownloadPath { get; set; }
         public string BlobColumnName { get; set; }
         public string FilenameColumnName { get; set; }
-        public override string ToString()
+
+        public void ClearAll()
         {
-            var value = "";
-            foreach (var prop in GetType().GetProperties())
+            foreach (var propInfo in GetType().GetProperties())
             {
-                value += prop.Name + ":" + prop.GetValue(this, null);
+                propInfo.SetValue(this,"",null);
             }
-            return value;
         }
     }
 }

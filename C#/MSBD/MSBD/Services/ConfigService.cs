@@ -9,7 +9,7 @@ namespace MSBD.Services
 {
     class ConfigService
     {
-        private const string DEFAULT_FILENAME = "default.xml";
+        private const string DEFAULT_FILENAME = "default.msbd";
         private readonly IsolatedStorageFile _userStorage;
         private readonly XmlSerializer _xmlSerializer;
 
@@ -19,15 +19,20 @@ namespace MSBD.Services
             _userStorage = IsolatedStorageFile.GetUserStoreForAssembly();
         }
 
+        public String DefaultFilename
+        {
+            get { return DEFAULT_FILENAME; }
+        }
+
         internal void SaveConfig(DownloadConfig config, String path)
         {
-            using (var streamWriter = new StreamWriter(path))
+            using (var streamWriter = new StreamWriter(path,false))
                 Save(streamWriter,config);
         }
 
         internal void SaveToDefaultConfig(DownloadConfig defaulgConfig)
         {
-            using (var userStorageFileStream = new IsolatedStorageFileStream(DEFAULT_FILENAME, FileMode.OpenOrCreate, _userStorage))
+            using (var userStorageFileStream = new IsolatedStorageFileStream(DEFAULT_FILENAME, FileMode.Create, _userStorage))
                 using (var userStorageStreamWriter = new StreamWriter(userStorageFileStream))
                     Save(userStorageStreamWriter, defaulgConfig);
         }
@@ -53,11 +58,9 @@ namespace MSBD.Services
 
         private DownloadConfig Read(StreamReader streamReader)
         {
-
             using (streamReader)
                 return (DownloadConfig) _xmlSerializer.Deserialize(streamReader);
         }
-
-        
+     
     }
 }

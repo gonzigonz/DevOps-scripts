@@ -11,13 +11,16 @@ namespace MSBD
         private DownloadConfig _currentConfig;
         private readonly MssqlBlobDownloaderService _downloaderService;
         private readonly ConfigService _configService;
+        private string _currentOpenFilename;
 
         public Form1()
         {
             InitializeComponent();
             _downloaderService = new MssqlBlobDownloaderService();
             _configService = new ConfigService();
+            _currentOpenFilename = _configService.DefaultFilename;
             ReadOrCreateDefaultConfig();
+            labelConfigChangedFlag.Visible = false;
         }
 
         public void WriteToTextBoxOutput(String value)
@@ -67,18 +70,11 @@ namespace MSBD
             try
             {
                 _currentConfig = _configService.ReadDefaultConfig();
-                RefreshGui(_currentConfig);
             }
             catch (Exception)
             {
-                _currentConfig = new DownloadConfig
-                {
-                    ConnectionString = "Server = <servername>; Database = <databasename>; Trusted_Connection = True",
-                    QueryString = "SELECT filename, blob FROM schema.tablename",
-                    DownloadPath = @"C:\Temp",
-                    BlobColumnName = "blob",
-                    FilenameColumnName = "filename"
-                };
+                _currentConfig = CreateNewConfig();
+                _configService.SaveToDefaultConfig(_currentConfig);
             }
             finally
             {
@@ -86,8 +82,21 @@ namespace MSBD
             }
         }
 
+        private DownloadConfig CreateNewConfig()
+        {
+            return new DownloadConfig
+            {
+                ConnectionString = "Server = <servername>; Database = <databasename>; Trusted_Connection = True; Connection Timeout = 60",
+                QueryString = "SELECT filename, blob FROM schema.tablename",
+                DownloadPath = @"C:\Temp",
+                BlobColumnName = "blob",
+                FilenameColumnName = "filename"
+            };
+        }
+
         private void RefreshGui(DownloadConfig config)
         {
+            groupBoxConfig.Text = @"Config - " + _currentOpenFilename;
             textBoxConnectionString.Text = config.ConnectionString;
             textBoxSqlQueryString.Text = config.QueryString;
             textBoxDownloadPath.Text = config.DownloadPath;
@@ -111,6 +120,74 @@ namespace MSBD
         private void buttonClear_Click(object sender, EventArgs e)
         {
             textBoxOutput.Clear();
+        }
+
+        private void newToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            _currentConfig = CreateNewConfig();
+            RefreshGui(_currentConfig);
+        }
+
+        private void exitToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            _configService.SaveToDefaultConfig(_currentConfig);
+            Close();
+        }
+
+        private void saveToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // Save file
+            _currentConfig = GetConfigFromGui();
+            if (_currentOpenFilename == _configService.DefaultFilename)
+            {
+                _configService.SaveToDefaultConfig(_currentConfig);
+            }
+            else
+            {
+                _configService.SaveConfig(_currentConfig, _currentOpenFilename);
+            }
+            labelConfigChangedFlag.Visible = false;
+        }
+
+        private void saveAsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var saveDialog = new SaveFileDialog();
+            saveDialog.Filter = @"MS SQL Blob Downloader Config|*.msbd";
+            saveDialog.AddExtension = true;
+            var result = saveDialog.ShowDialog();
+            if (result != DialogResult.OK) return;
+
+            // Save file as
+            _currentConfig = GetConfigFromGui();
+            _currentOpenFilename = saveDialog.FileName;
+            _configService.SaveConfig(_currentConfig, _currentOpenFilename);
+            
+            // Update GUI - Specificailly the group config name
+            RefreshGui(_currentConfig);
+            labelConfigChangedFlag.Visible = false;
+        }
+
+        private void openToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var openDialog = new OpenFileDialog();
+            openDialog.Filter = @"MS SQL Blob Downloader Config|*.msbd";
+            var result = openDialog.ShowDialog();
+            if (result != DialogResult.OK) return;
+
+            // Open selected file
+            _currentOpenFilename = openDialog.FileName;
+            _currentConfig = _configService.ReadConfig(_currentOpenFilename);
+            RefreshGui(_currentConfig);
+        }
+
+        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            _configService.SaveToDefaultConfig(_currentConfig);
+        }
+
+        protected void OnConfigChanged(object sender, EventArgs e)
+        {
+            labelConfigChangedFlag.Visible = true;
         }
     }
 }
