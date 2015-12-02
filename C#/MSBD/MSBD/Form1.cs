@@ -125,6 +125,7 @@ namespace MSBD
         private void newToolStripMenuItem_Click(object sender, EventArgs e)
         {
             _currentConfig = CreateNewConfig();
+            _currentOpenFilename = _configService.DefaultFilename;
             RefreshGui(_currentConfig);
         }
 
