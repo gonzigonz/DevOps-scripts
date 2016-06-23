@@ -2,6 +2,7 @@
 using System.Globalization;
 using System.Windows.Forms;
 using MSBD.Entities;
+using MSBD.Helpers;
 using MSBD.Services;
 
 namespace MSBD
@@ -16,7 +17,7 @@ namespace MSBD
         public Form1()
         {
             InitializeComponent();
-            _downloaderService = new MssqlBlobDownloaderService();
+            _downloaderService = new MssqlBlobDownloaderService(ApplicationType.Form);
             _configService = new ConfigService();
             _currentOpenFilename = _configService.DefaultFilename;
             ReadOrCreateDefaultConfig();
@@ -90,7 +91,8 @@ namespace MSBD
                 QueryString = "SELECT filename, blob FROM schema.tablename",
                 DownloadPath = @"C:\Temp",
                 BlobColumnName = "blob",
-                FilenameColumnName = "filename"
+                FilenameColumnName = "filename",
+                QueryTimeout = 30
             };
         }
 
@@ -102,6 +104,7 @@ namespace MSBD
             textBoxDownloadPath.Text = config.DownloadPath;
             textBoxBlobColumnName.Text = config.BlobColumnName;
             textBoxFileNameColumnName.Text = config.FilenameColumnName;
+            txtQueryTimeout.Text = config.QueryTimeout.ToString();
         }
 
         private DownloadConfig GetConfigFromGui()
@@ -114,6 +117,11 @@ namespace MSBD
                 BlobColumnName = textBoxBlobColumnName.Text,
                 FilenameColumnName = textBoxFileNameColumnName.Text
             };
+
+            int queryTimeout;
+            if (int.TryParse(txtQueryTimeout.Text, out queryTimeout))
+                config.QueryTimeout = queryTimeout;
+
             return config;
         }
 

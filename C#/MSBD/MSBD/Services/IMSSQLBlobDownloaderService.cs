@@ -2,7 +2,7 @@
 
 namespace MSBD.Services
 {
-    interface IMssqlBlobDownloaderService
+    public interface IMssqlBlobDownloaderService
     {
         void Download(DownloadConfig config);
         void RunSqlQuery(DownloadConfig config);

@@ -43,6 +43,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Helpers\ApplicationType.cs" />
+    <Compile Include="Helpers\ConsoleHelper.cs" />
+    <Compile Include="MSBDConsole.cs" />
     <Compile Include="Services\ConfigService.cs" />
     <Compile Include="Entities\DownloadConfig.cs" />
     <Compile Include="Form1.cs">

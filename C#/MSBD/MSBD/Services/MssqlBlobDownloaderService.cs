@@ -2,103 +2,86 @@
 using System.Data.SqlClient;
 using System.IO;
 using MSBD.Entities;
+using MSBD.Helpers;
 
 namespace MSBD.Services
 {
     public class MssqlBlobDownloaderService : IMssqlBlobDownloaderService
     {
         private DownloadConfig _currentConfig;
+        private readonly ApplicationType _appType;
+
+        public MssqlBlobDownloaderService(ApplicationType appType = ApplicationType.Form)
+        {
+            _appType = appType;
+        }
 
         public void Download(DownloadConfig config)
         {
-            Program.WriteLine();
-            Program.WriteLine(@"Downloading Blobs...");
+            WriteLine();
+            WriteLine(@"Downloading Blobs...");
 
             var startTime = DateTime.Now;
             var count = 0;
             _currentConfig = config;
 
             // Validate our data
-            if (String.IsNullOrEmpty(_currentConfig.BlobColumnName))
-            {
+            if (string.IsNullOrEmpty(_currentConfig.BlobColumnName))
                 throw new Exception("MssqlBlobDownloaderService: The Blob Column Name can not be null or blank!");
-            }
-            if (String.IsNullOrEmpty(_currentConfig.FilenameColumnName))
-            {
+
+            if (string.IsNullOrEmpty(_currentConfig.FilenameColumnName))
                 throw new Exception("MssqlBlobDownloaderService: The FileName Column Name can not be null or blank!");
-            }
 
             var blobColumnOrdinal = GetColumnOrdinal(_currentConfig.BlobColumnName);
             var fileNameColumnOrdinal = GetColumnOrdinal(_currentConfig.FilenameColumnName);
             
             try
             {
-                using (var connection = new SqlConnection(_currentConfig.ConnectionString))
+                ExecuteCommandWithReader(sqlDataReader =>
                 {
-                    using (var sqlCommand = new SqlCommand(_currentConfig.QueryString, connection))
+                    while (sqlDataReader.Read())
                     {
-                        connection.Open();
-                        using (var sqlDataReader = sqlCommand.ExecuteReader())
-
+                        var fileName = sqlDataReader.GetString(fileNameColumnOrdinal);
+                        var fileNamePath = Path.Combine(_currentConfig.DownloadPath, fileName);
+                        WriteLine("Downloading \"{0}\" to {1}", fileName, fileNamePath);
+                        try
                         {
-                            
-                            while (sqlDataReader.Read())
-                            {
-                                var fileName = sqlDataReader.GetString(fileNameColumnOrdinal);
-                                var fileNamePath = Path.Combine(_currentConfig.DownloadPath, fileName);
-                                Program.Write("Downloading \"" + fileName + "\" to " + fileNamePath);
+                            var buffer = new byte[sqlDataReader.GetBytes(blobColumnOrdinal, 0L, null, 0, int.MaxValue)];
+                            sqlDataReader.GetBytes(blobColumnOrdinal, 0L, buffer, 0, buffer.Length);
+                            using (var fileStream = new FileStream(fileNamePath, FileMode.Create, FileAccess.Write))
+                                fileStream.Write(buffer, 0, buffer.Length);
 
-                                try
-                                {
-                                    var buffer = new byte[sqlDataReader.GetBytes(blobColumnOrdinal, 0L, null, 0, int.MaxValue)];
-                                    sqlDataReader.GetBytes(blobColumnOrdinal, 0L, buffer, 0, buffer.Length);
-                                    using (var fileStream = new FileStream(fileNamePath, FileMode.Create, FileAccess.Write))
-                                        fileStream.Write(buffer, 0, buffer.Length);
-
-                                    Program.WriteLine(" - Complete");
-                                }
-                                catch (Exception e)
-                                {
-                                    Program.WriteLine(" - Error (" + e + ")");
-                                }
-
-                                count += 1;
-                            }
-                            Program.WriteLine();
-                            //Program.WriteLine("Done (" + count + " files downloaded)");
+                            WriteLine(" - Complete");
                         }
+                        catch (Exception e)
+                        {
+                            WriteLine(" - Error ({0})", e);
+                        }
+
+                        count += 1;
                     }
-                }
+                    WriteLine();
+                });
             }
             catch (Exception e)
             {
-                Program.WriteLine();
-                Program.WriteLine("SQL Error: " + e);
+                WriteLine();
+                WriteLine("SQL Error: {0}", e);
             }
             finally
             {
-                //// Display when done
-                //var ts = DateTime.Now - startTime;
-                //var duration = string.Format(
-                //    "{0:00}:{1:00}:{2:00}", ts.TotalHours, ts.Minutes, ts.Seconds);
-
-                //Program.WriteLine(@"Duration: " + duration);
-                //Program.WriteLine();
-
                 // Display when done
                 var ts = DateTime.Now - startTime;
-                var duration = string.Format(
-                    "{0:00}:{1:00}:{2:00}", ts.TotalHours, ts.Minutes, ts.Seconds);
+                var duration = string.Format("{0:00}:{1:00}:{2:00}", ts.TotalHours, ts.Minutes, ts.Seconds);
 
-                Program.WriteLine(string.Format(
-                    "Download Completed\t{0}\t{1} files", duration, count));
-                Program.WriteLine();
+                WriteLine("Download Completed\t{0}\t{1} files", duration, count);
+                WriteLine();
             }
         }
 
         public void RunSqlQuery(DownloadConfig config)
         {
-            Program.WriteLine(@"Running Query...");
+            WriteLine(@"Running Query...");
             var startTime = DateTime.Now; 
             
             _currentConfig = config;
@@ -106,85 +89,145 @@ namespace MSBD.Services
 
             try
             {
-                using (var connection = new SqlConnection(_currentConfig.ConnectionString))
+                ExecuteCommandWithReader(sqlDataReader =>
                 {
-                    using (var sqlCommand = new SqlCommand(_currentConfig.QueryString, connection))
+                    var fieldCount = sqlDataReader.FieldCount;
+
+                    // Get headers
+                    for (var i = 0; i < fieldCount; i++)
                     {
-                        connection.Open();
-                        using (var sqlDataReader = sqlCommand.ExecuteReader())
-                        {
-                            var fieldCount = sqlDataReader.FieldCount;
-
-                            // Get headers
-                            for (var i = 0; i < fieldCount; i++)
-                            {
-                                Program.Write(sqlDataReader.GetName(i) + "\t");
-                            }
-                            Program.WriteLine();
-
-                            // Get records
-                            var cache = "";
-                            while (sqlDataReader.Read())
-                            {
-                                for (var i = 0; i < fieldCount; i++)
-                                {
-                                    cache += sqlDataReader.GetValue(i) + "\t";
-                                }
-                                count += 1;
-                                cache += Environment.NewLine;
-                            }
-                            Program.WriteLine(cache);
-                        }
+                        Write(sqlDataReader.GetName(i) + "\t");
                     }
-                }
+                    WriteLine();
+
+                    // Get records
+                    var cache = "";
+                    while (sqlDataReader.Read())
+                    {
+                        for (var i = 0; i < fieldCount; i++)
+                        {
+                            cache += sqlDataReader.GetValue(i) + "\t";
+                        }
+                        count += 1;
+                        cache += Environment.NewLine;
+                    }
+                    WriteLine(cache);
+                });
             }
             catch (Exception e)
             {
-                Program.WriteLine();
-                Program.WriteLine("SQL Error: " + e);
+                WriteLine();
+                WriteLine("SQL Error: {0}", e);
             }
             finally
             {
                 // Display when done
                 var ts = DateTime.Now - startTime;
-                var duration = string.Format(
-                    "{0:00}:{1:00}:{2:00}", ts.TotalHours, ts.Minutes, ts.Seconds);
+                var duration = string.Format("{0:00}:{1:00}:{2:00}", ts.TotalHours, ts.Minutes, ts.Seconds);
 
-                Program.WriteLine(string.Format(
-                    "Query Executed Successfully\t{0}\t{1} rows", duration, count));
-                Program.WriteLine();
+                WriteLine("Query Executed Successfully\t{0}\t{1} rows", duration, count);
+                WriteLine();
+            }
+        }
+
+        private void WriteLine(string msg = "")
+        {
+            switch (_appType)
+            {
+                case ApplicationType.Console:
+                    Console.WriteLine(msg);
+                    break;
+                case ApplicationType.Form:
+                    Program.WriteLine(msg);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        private void WriteLine(string msg, params object[] arg)
+        {
+            switch (_appType)
+            {
+                case ApplicationType.Console:
+                    Console.WriteLine(msg, arg);
+                    break;
+                case ApplicationType.Form:
+                    Program.WriteLine(string.Format(msg, arg));
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        private void Write(string msg, params object[] arg)
+        {
+            switch (_appType)
+            {
+                case ApplicationType.Console:
+                    Console.Write(msg, arg);
+                    break;
+                case ApplicationType.Form:
+                    Program.Write(string.Format(msg, arg));
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
         }
 
         private int GetColumnOrdinal(string columnName)
         {
-            if (String.IsNullOrEmpty(columnName))
-            {
+            if (string.IsNullOrEmpty(columnName))
                 throw new Exception("GetColumnOrdinal(string columnName): The Column Name can not be null or blank!");
-            }
 
-            //Query SQL to find the blob column ordinal (coloumn index in table)
+            return ExecuteCommandWithReader<int>(sqlDataReader =>
+            {
+                for (var i = 0; i < sqlDataReader.FieldCount; i++)
+                {
+                    if (string.IsNullOrEmpty(sqlDataReader.GetName(i)))
+                        continue;
+
+                    if (string.Equals(sqlDataReader.GetName(i), columnName, StringComparison.CurrentCultureIgnoreCase))
+                        return i;
+                }
+
+                //If we haven't returned a value by now then it doesn't exits!
+                throw new Exception("GetColumnOrdinal(string columnName): The given Column Name '" + columnName + "' was not found!");
+            });
+        }
+
+        private void ExecuteCommandWithReader(Action<SqlDataReader> readerExecution)
+        {
             using (var connection = new SqlConnection(_currentConfig.ConnectionString))
             {
                 using (var sqlCommand = new SqlCommand(_currentConfig.QueryString, connection))
                 {
+                    sqlCommand.CommandTimeout = _currentConfig.QueryTimeout;
                     connection.Open();
                     using (var sqlDataReader = sqlCommand.ExecuteReader())
                     {
-                        for (var i = 0; i < sqlDataReader.FieldCount; i++)
-                        {
-                            if (String.IsNullOrEmpty(sqlDataReader.GetName(i))) continue;
-                            if (sqlDataReader.GetName(i).ToLower() == columnName.ToLower())
-                            {
-                                return i;
-                            }
-                        }
-
-                        //If we haven't returned a value by now then it doesn't exits!
-                        throw new Exception("GetColumnOrdinal(string columnName): The given Column Name '" + columnName + "' was not found!");
+                        readerExecution(sqlDataReader);
                     }
                 }
             }
+        }
+
+        private TResult ExecuteCommandWithReader<TResult>(Func<SqlDataReader, TResult> readerExecution)
+        {
+            TResult result;
+            using (var connection = new SqlConnection(_currentConfig.ConnectionString))
+            {
+                using (var sqlCommand = new SqlCommand(_currentConfig.QueryString, connection))
+                {
+                    sqlCommand.CommandTimeout = _currentConfig.QueryTimeout;
+                    connection.Open();
+                    using (var sqlDataReader = sqlCommand.ExecuteReader())
+                    {
+                        result = readerExecution(sqlDataReader);
+                    }
+                }
+            }
+            return result;
         }
 
         protected virtual bool IsFileLocked(FileInfo file)
